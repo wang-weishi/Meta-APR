@@ -1,0 +1,42 @@
+#Below sample yaml is used to schedule pods on 1 A100 GPU
+apiVersion: v1
+kind: Pod
+metadata:
+ name: a100
+ namespace: sfr-ns-weishi-wang
+spec:
+  restartPolicy: OnFailure
+  volumes:
+    - name: sfr-home-pv-weishi-wang
+      persistentVolumeClaim:
+        claimName: sfr-home-pvc-weishi-wang
+    - name: sfr-share-pv-weishi-wang
+      persistentVolumeClaim:
+        claimName: sfr-share-pvc-weishi-wang
+    - name: dshm
+      emptyDir:
+        medium: Memory
+  containers:
+    - name: weishi-env-a100
+      image: "gcr.io/salesforce-research-internal/weishi-a100-env"
+      command: ["sleep", "14d"]
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+          cpu: "11"
+          memory: 75G
+      volumeMounts:
+        - name: sfr-home-pv-weishi-wang
+          mountPath: "/export/home"
+        - name: sfr-share-pv-weishi-wang
+          mountPath: "/export/share"
+        - name: dshm
+          mountPath: "/dev/shm"
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-tesla-a100
+  tolerations:
+  - key: "gpu_num"
+    operator: "Equal"
+    value: "1"
+    effect: "NoSchedule"
+
